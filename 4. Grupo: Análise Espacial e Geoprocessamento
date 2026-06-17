@@ -3,7 +3,7 @@
 -- CATEGORIA: ANÁLISE ESPACIAL E GEOPROCESSAMENTO
 -- =========================================================================
 
--- 1. Cálculo de Distância Linear entre Coordenadas (Suporta retornos em 'M' ou 'KM')
+-- 1. Cálculo de Distância Linear entre Coordenadas (Suporta retornos em 'M' ou 'KM') --------------------------------------------------
 CREATE FUNCTION dbo.fn_Geo_CalcularDistancia (
     @Lat1 FLOAT,
     @Lon1 FLOAT,
@@ -39,12 +39,8 @@ BEGIN
 END;
 GO
 
-
--- =========================================================================
--- Script de Teste Atualizado (Para a sua validação)
--- Veja como o SELECT fica muito mais profissional mudando apenas a flag de unidade na chamada da função:
--- =========================================================================
-
+-- Script de Teste tpara a validação da função "dbo.fn_Geo_CalcularDistancia":
+-- Mudando apenas a flag da unidade ("M" ou "KM") na chamada da função para ter o resultado desejado
 WITH DBO_PONTOS_MOCK AS (
     SELECT 
         'Praça Deodoro até Igreja da Sé' AS Descricao,
@@ -53,6 +49,38 @@ WITH DBO_PONTOS_MOCK AS (
 )
 SELECT 
     Descricao,
-    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'M') AS Distancia_Metros,
-    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'KM') AS Distancia_KM
+    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'M') AS Distancia_Metros, -- flag da unidade "M"
+    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'KM') AS Distancia_KM -- flag da unidade "KM"
 FROM DBO_PONTOS_MOCK;
+--- Fim do teste
+
+-- 2. Cálculo de Área de um Polígono Geográfico (Suporta retornos em 'M2' ou 'KM2') ----------------------------------------------------
+CREATE FUNCTION dbo.fn_Geo_CalcularAreaPoligono (
+    @TextoWKT VARCHAR(MAX), -- Texto no formato WKT (ex: 'POLYGON((lon lat, lon lat, ...))')
+    @Unidade VARCHAR(3)    -- 'M2' para Metros Quadrados, 'KM2' para Quilômetros Quadrados
+)
+RETURNS FLOAT
+AS
+BEGIN
+    DECLARE @Poligono GEOGRAPHY;
+    DECLARE @Area FLOAT;
+
+    -- Validação de segurança para evitar erros de execução com dados nulos
+    IF @TextoWKT IS NULL OR @Unidade IS NULL
+        RETURN NULL;
+
+    -- Cria o objeto polígono a partir do texto WKT usando o padrão WGS84 (SRID 4326)
+    SET @Poligono = GEOGRAPHY::STGeomFromText(@TextoWKT, 4326);
+
+    -- O método .STArea() calcula a área nativa em Metros Quadrados
+    SET @Area = @Poligono.STArea();
+
+    -- Aplica a conversão matemática caso o usuário mude a flag para Quilômetros Quadrados
+    IF UPPER(@Unidade) = 'KM2'
+    BEGIN
+        SET @Area = @Area / 1000000.0;
+    END
+
+    RETURN @Area;
+END;
+GO
