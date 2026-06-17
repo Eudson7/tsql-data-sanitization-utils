@@ -1,4 +1,3 @@
-
 -- =========================================================================
 -- CATEGORIA: ANÁLISE ESPACIAL E GEOPROCESSAMENTO
 -- =========================================================================
@@ -24,7 +23,7 @@ BEGIN
 
     -- O número 4326 representa o WGS84 (padrão mundial do GPS)
     SET @Ponto1 = GEOGRAPHY::STGeomFromText('POINT(' + CAST(@Lon1 AS VARCHAR(20)) + ' ' + CAST(@Lat1 AS VARCHAR(20)) + ')', 4326);
-    SET @Ponto2 = GEOGRAPHY::STGeomFromText('POINT(' + CAST(@Lon2 AS VARCHAR(20)) + ' ' + CAST(@Lat2 AS VARCHAR(20)) + ')', 4326);
+    SET @Ponto2 = GEOGRAPHY::STGeomFromText('POINT(' + CAST(@Lon2 AS VARCHAR(20)) + ' ' + CAST(@Lat1 AS VARCHAR(20)) + ')', 4326);
 
     -- Calcula a distância nativa em metros
     SET @Distancia = @Ponto1.STDistance(@Ponto2);
@@ -39,7 +38,7 @@ BEGIN
 END;
 GO
 
--- Script de Teste tpara a validação da função "dbo.fn_Geo_CalcularDistancia":
+-- SCRIPT DE TESTE: fn_Geo_CalcularDistancia
 -- Mudando apenas a flag da unidade ("M" ou "KM") na chamada da função para ter o resultado desejado
 WITH DBO_PONTOS_MOCK AS (
     SELECT 
@@ -52,7 +51,8 @@ SELECT
     dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'M') AS Distancia_Metros, -- flag da unidade "M"
     dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'KM') AS Distancia_KM -- flag da unidade "KM"
 FROM DBO_PONTOS_MOCK;
---- Fim do teste
+GO
+
 
 -- 2. Cálculo de Área de um Polígono Geográfico (Suporta retornos em 'M2' ou 'KM2') ----------------------------------------------------
 CREATE FUNCTION dbo.fn_Geo_CalcularAreaPoligono (
@@ -83,4 +83,18 @@ BEGIN
 
     RETURN @Area;
 END;
+GO
+
+-- SCRIPT DE TESTE: fn_Geo_CalcularAreaPoligono
+WITH DBO_POLIGONO_MOCK AS (
+    SELECT 
+        'Área Fictícia de Cobertura' AS Descricao,
+        -- Polígono fechado em formato WKT (O último par de coordenadas repete o primeiro)
+        'POLYGON((-44.30 -2.50, -44.31 -2.50, -44.31 -2.51, -44.30 -2.51, -44.30 -2.50))' AS PoligonoWKT
+)
+SELECT 
+    Descricao,
+    dbo.fn_Geo_CalcularAreaPoligono(PoligonoWKT, 'M2') AS Area_Metros_Quadrados, -- flag "M2"
+    dbo.fn_Geo_CalcularAreaPoligono(PoligonoWKT, 'KM2') AS Area_Quilometros_Quadrados -- flag "KM2"
+FROM DBO_POLIGONO_MOCK;
 GO
