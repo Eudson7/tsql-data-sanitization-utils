@@ -54,7 +54,7 @@ FROM DBO_PONTOS_MOCK;
 GO
 
 
--- 2. Cálculo de Área de um Polígono Geográfico (Suporta GEOGRAPHY e auto-correção de hemisfério)
+-- 2. Cálculo de Área de um Polígono Geográfico (Suporta GEOGRAPHY e auto-correção de hemisfério) --------------------------------------------------------
 CREATE FUNCTION dbo.fn_Geo_CalcularAreaPoligono (
     @Geometria GEOGRAPHY,
     @Unidade VARCHAR(3) -- 'M2' para Metros Quadrados, 'KM2' para Quilômetros Quadrados
