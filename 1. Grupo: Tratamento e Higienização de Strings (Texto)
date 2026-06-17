@@ -1,0 +1,77 @@
+-- =========================================================================
+-- CATEGORIA: HIGIENIZAÇÃO E TRATAMENTO DE TEXTO
+-- =========================================================================
+
+-- 1.1. Remoção de Acentuação com Tratamento Binário (Blindado para Collation CI_AI)
+CREATE FUNCTION dbo.fn_Util_RemoverAcentuacao (@Texto VARCHAR(MAX))
+RETURNS VARCHAR(MAX)
+AS
+BEGIN
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ó', 'O');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ó', 'o');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ò', 'O');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ò', 'o');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ô', 'O');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ô', 'o');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Õ', 'O');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'õ', 'o');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Á', 'A');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'á', 'a');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'À', 'A');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'à', 'a');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Â', 'A');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'â', 'a');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ã', 'A');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ã', 'a');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ç', 'C');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ç', 'c');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'É', 'E');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'é', 'e');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ê', 'E');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ê', 'e');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Í', 'I');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'í', 'i');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'Ú', 'U');
+    SET @Texto = REPLACE(@Texto COLLATE Latin1_General_BIN, 'ú', 'u');
+    RETURN @Texto;
+END;
+GO
+
+-- 1.2. Remoção de Caracteres Especiais (Mantém apenas letras, números e espaços)
+CREATE FUNCTION dbo.fn_Util_LimparCaracteresEspeciais (@Texto VARCHAR(MAX))
+RETURNS VARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @Padrao VARCHAR(255) = '%[^a-zA-Z0-9 ]%'; 
+    SET @Texto = @Texto COLLATE Latin1_General_BIN;
+    
+    WHILE PATINDEX(@Padrao, @Texto) > 0
+    BEGIN
+        SET @Texto = STUFF(@Texto, PATINDEX(@Padrao, @Texto), 1, '');
+    END
+    RETURN @Texto;
+END;
+GO
+
+-- 1.3. Capitalização Inteligente de Strings (Equivalente ao InitCap)
+CREATE FUNCTION dbo.fn_Util_FormatInitCap (@Texto VARCHAR(MAX))
+RETURNS VARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @Resultado VARCHAR(MAX) = '';
+    DECLARE @Indice INT = 1;
+    DECLARE @Caractere CHAR(1);
+    
+    SET @Texto = LOWER(RTRIM(LTRIM(@Texto)));
+    WHILE @Indice <= LEN(@Texto)
+    BEGIN
+        SET @Caractere = SUBSTRING(@Texto, @Indice, 1);
+        IF @Indice = 1 OR SUBSTRING(@Texto, @Indice - 1, 1) = ' '
+            SET @Resultado = @Resultado + UPPER(@Caractere);
+        ELSE
+            SET @Resultado = @Resultado + @Caractere;
+        SET @Indice = @Indice + 1;
+    END
+    RETURN @Resultado;
+END;
+GO
