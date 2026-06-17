@@ -74,4 +74,21 @@ BEGIN
     END
     RETURN @Resultado;
 END;
+
+-- 1.4. Validação de String Puramente Numérica (Garante apenas dígitos de 0 a 9)
+CREATE FUNCTION dbo.fn_Util_ApenasNumeros (@Texto VARCHAR(MAX))
+RETURNS BIT -- Retorna 1 para Verdadeiro e 0 para Falso
+AS
+BEGIN
+    -- Se o texto for nulo ou vazio, não é puramente numérico
+    IF @Texto IS NULL OR LEN(RTRIM(LTRIM(@Texto))) = 0
+        RETURN 0;
+
+    -- Se encontrar qualquer caractere que NÃO seja de 0 a 9, PATINDEX retorna maior que 0
+    IF PATINDEX('%[^0-9]%', @Texto) > 0
+        RETURN 0; 
+
+    RETURN 1; -- Contém estritamente apenas números
+END;
+GO
 GO
