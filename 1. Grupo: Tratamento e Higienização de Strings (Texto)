@@ -2,7 +2,7 @@
 -- CATEGORIA: HIGIENIZAÇÃO E TRATAMENTO DE TEXTO
 -- =========================================================================
 
--- 1.1. Remoção de Acentuação com Tratamento Binário (Blindado para Collation CI_AI)
+-- 1.1. Remoção de Acentuação com Tratamento Binário (Blindado para Collation CI_AI - Case Insensitive (CI) e Accent Insensitive (AI) - banco de dados com Case Sensitive desativado)
 CREATE FUNCTION dbo.fn_Util_RemoverAcentuacao (@Texto VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
