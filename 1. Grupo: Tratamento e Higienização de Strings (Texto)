@@ -53,7 +53,7 @@ BEGIN
 END;
 GO
 
--- 1.3. Capitalização Inteligente de Strings (Equivalente ao InitCap)
+-- 1.3. Capitalização Inteligente de Strings (Equivalente ao InitCap - Primeira letra em maíuscula)
 CREATE FUNCTION dbo.fn_Util_FormatInitCap (@Texto VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
