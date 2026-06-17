@@ -37,6 +37,17 @@ BEGIN
 END;
 GO
 
+-- SCRIPT DE TESTE: fn_Util_RemoverAcentuacao
+WITH MOCK_TESTE AS (
+    SELECT 'Avenida dos Holandeses, Óbidos, Centro Histórico (Próximo à Igreja).' AS TextoOriginal
+)
+SELECT 
+    TextoOriginal,
+    dbo.fn_Util_RemoverAcentuacao(TextoOriginal) AS Texto_Sem_Acentuacao
+FROM MOCK_TESTE;
+GO
+
+
 -- 1.2. Remoção de Caracteres Especiais (Mantém apenas letras, números e espaços)
 CREATE FUNCTION dbo.fn_Util_LimparCaracteresEspeciais (@Texto VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
@@ -52,6 +63,17 @@ BEGIN
     RETURN @Texto;
 END;
 GO
+
+-- SCRIPT DE TESTE: fn_Util_LimparCaracteresEspeciais
+WITH MOCK_TESTE AS (
+    SELECT 'Rua do Giz, n° 45 – Centro Histórico!' AS TextoOriginal
+)
+SELECT 
+    TextoOriginal,
+    dbo.fn_Util_LimparCaracteresEspeciais(TextoOriginal) AS Texto_Sem_Especiais
+FROM MOCK_TESTE;
+GO
+
 
 -- 1.3. Capitalização Inteligente de Strings (Equivalente ao InitCap - Primeira letra em maíuscula)
 CREATE FUNCTION dbo.fn_Util_FormatInitCap (@Texto VARCHAR(MAX))
@@ -74,6 +96,18 @@ BEGIN
     END
     RETURN @Resultado;
 END;
+GO
+
+-- SCRIPT DE TESTE: fn_Util_FormatInitCap
+WITH MOCK_TESTE AS (
+    SELECT 'joão da silva aurélio' AS TextoOriginal
+)
+SELECT 
+    TextoOriginal,
+    dbo.fn_Util_FormatInitCap(TextoOriginal) AS Texto_Formatado_InitCap
+FROM MOCK_TESTE;
+GO
+
 
 -- 1.4. Validação de String Puramente Numérica (Garante apenas dígitos de 0 a 9)
 CREATE FUNCTION dbo.fn_Util_ApenasNumeros (@Texto VARCHAR(MAX))
@@ -91,4 +125,13 @@ BEGIN
     RETURN 1; -- Contém estritamente apenas números
 END;
 GO
+
+-- SCRIPT DE TESTE: fn_Util_ApenasNumeros
+WITH MOCK_TESTE AS (
+    SELECT '12345678900' AS Valido, '123.456.789-00' AS Invalido
+)
+SELECT 
+    Valido AS Caso_1_Original, dbo.fn_Util_ApenasNumeros(Valido) AS Caso_1_Resultado,
+    Invalido AS Caso_2_Original, dbo.fn_Util_ApenasNumeros(Invalido) AS Caso_2_Resultado
+FROM MOCK_TESTE;
 GO
