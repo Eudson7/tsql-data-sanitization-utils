@@ -1,0 +1,42 @@
+-- =========================================================================
+-- CATEGORIA: DOCUMENTOS PESSOAIS E FISCAIS
+-- =========================================================================
+
+-- 2.1. Formatação e Alinhamento de CPF (11 dígitos)
+CREATE FUNCTION dbo.fn_Format_CPF (@CPF VARCHAR(11))
+RETURNS VARCHAR(14)
+AS
+BEGIN
+    DECLARE @CPF_Formatado VARCHAR(14);
+    SET @CPF = RIGHT('00000000000' + @CPF, 11);
+
+    IF LEN(@CPF) = 11
+        SET @CPF_Formatado = SUBSTRING(@CPF, 1, 3) + '.' + 
+                             SUBSTRING(@CPF, 4, 3) + '.' + 
+                             SUBSTRING(@CPF, 7, 3) + '-' + 
+                             SUBSTRING(@CPF, 10, 2);
+    ELSE
+        SET @CPF_Formatado = @CPF;
+    RETURN @CPF_Formatado;
+END;
+GO
+
+-- 2.2. Formatação e Alinhamento de CNPJ (14 dígitos)
+CREATE FUNCTION dbo.fn_Format_CNPJ (@CNPJ VARCHAR(14))
+RETURNS VARCHAR(18)
+AS
+BEGIN
+    DECLARE @CNPJ_Formatado VARCHAR(18);
+    SET @CNPJ = RIGHT('00000000000000' + @CNPJ, 14);
+
+    IF LEN(@CNPJ) = 14
+        SET @CNPJ_Formatado = SUBSTRING(@CNPJ, 1, 2) + '.' + 
+                             SUBSTRING(@CNPJ, 3, 3) + '.' + 
+                             SUBSTRING(@CNPJ, 6, 3) + '/' + 
+                             SUBSTRING(@CNPJ, 9, 4) + '-' + 
+                             SUBSTRING(@CNPJ, 13, 2);
+    ELSE
+        SET @CNPJ_Formatado = @CNPJ;
+    RETURN @CNPJ_Formatado;
+END;
+GO
