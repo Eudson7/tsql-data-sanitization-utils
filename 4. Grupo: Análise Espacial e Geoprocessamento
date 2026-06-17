@@ -54,28 +54,22 @@ FROM DBO_PONTOS_MOCK;
 GO
 
 
--- 2. Cálculo de Área de um Polígono Geográfico (Suporta retornos em 'M2' ou 'KM2') ----------------------------------------------------
+-- 2. Cálculo de Área de um Polígono Geográfico (Suporta GEOGRAPHY e auto-correção de hemisfério)
 CREATE FUNCTION dbo.fn_Geo_CalcularAreaPoligono (
-    @TextoWKT VARCHAR(MAX), -- Texto no formato WKT (ex: 'POLYGON((lon lat, lon lat, ...))')
-    @Unidade VARCHAR(3)    -- 'M2' para Metros Quadrados, 'KM2' para Quilômetros Quadrados
+    @Geometria GEOGRAPHY,
+    @Unidade VARCHAR(3) -- 'M2' para Metros Quadrados, 'KM2' para Quilômetros Quadrados
 )
 RETURNS FLOAT
 AS
 BEGIN
-    DECLARE @Poligono GEOGRAPHY;
-    DECLARE @Area FLOAT;
-
     -- Validação de segurança para evitar erros de execução com dados nulos
-    IF @TextoWKT IS NULL OR @Unidade IS NULL
+    IF @Geometria IS NULL OR @Unidade IS NULL
         RETURN NULL;
 
-    -- Cria o objeto polígono a partir do texto WKT usando o padrão WGS84 (SRID 4326)
-    SET @Poligono = GEOGRAPHY::STGeomFromText(@TextoWKT, 4326);
+    -- O método .ReorientObject() detecta e corrige automaticamente polígonos invertidos
+    DECLARE @Area FLOAT = @Geometria.ReorientObject().STArea();
 
-    -- O método .STArea() calcula a área nativa em Metros Quadrados
-    SET @Area = @Poligono.STArea();
-
-    -- Aplica a conversão matemática caso o usuário mude a flag para Quilômetros Quadrados
+    -- Aplica a conversão matemática caso o usuário solicite em Quilômetros Quadrados
     IF UPPER(@Unidade) = 'KM2'
     BEGIN
         SET @Area = @Area / 1000000.0;
@@ -86,15 +80,21 @@ END;
 GO
 
 -- SCRIPT DE TESTE: fn_Geo_CalcularAreaPoligono
+-- O teste abaixo valida a função usando um polígono normal e um polígono invertido na memória
 WITH DBO_POLIGONO_MOCK AS (
     SELECT 
-        'Área Fictícia de Cobertura' AS Descricao,
-        -- Polígono fechado em formato WKT (O último par de coordenadas repete o primeiro)
-        'POLYGON((-44.30 -2.50, -44.31 -2.50, -44.31 -2.51, -44.30 -2.51, -44.30 -2.50))' AS PoligonoWKT
+        'Polígono Orientação Correta' AS Descricao,
+        -- Desenhado no sentido horário (Normal)
+        GEOGRAPHY::STGeomFromText('POLYGON((-44.30 -2.50, -44.30 -2.51, -44.31 -2.51, -44.31 -2.50, -44.30 -2.50))', 4326) AS GeoDado
+    UNION ALL
+    SELECT 
+        'Polígono Orientação Invertida (Anti-Horário)' AS Descricao,
+        -- Desenhado no sentido anti-horário (Estouraria o hemisfério sem o ReorientObject)
+        GEOGRAPHY::STGeomFromText('POLYGON((-44.30 -2.50, -44.31 -2.50, -44.31 -2.51, -44.30 -2.51, -44.30 -2.50))', 4326) AS GeoDado
 )
 SELECT 
     Descricao,
-    dbo.fn_Geo_CalcularAreaPoligono(PoligonoWKT, 'M2') AS Area_Metros_Quadrados, -- flag "M2"
-    dbo.fn_Geo_CalcularAreaPoligono(PoligonoWKT, 'KM2') AS Area_Quilometros_Quadrados -- flag "KM2"
+    ROUND(dbo.fn_Geo_CalcularAreaPoligono(GeoDado, 'M2'), 2)  AS Area_Metros_Quadrados,
+    ROUND(dbo.fn_Geo_CalcularAreaPoligono(GeoDado, 'KM2'), 2) AS Area_KM_Quadrados
 FROM DBO_POLIGONO_MOCK;
 GO
