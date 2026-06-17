@@ -1,0 +1,57 @@
+-- =========================================================================
+-- CATEGORIA: ANÁLISE ESPACIAL E GEOPROCESSAMENTO
+-- =========================================================================
+
+-- 1. Cálculo de Distância Linear entre Coordenadas (Suporta retornos em 'M' ou 'KM')
+CREATE FUNCTION dbo.fn_Geo_CalcularDistancia (
+    @Lat1 FLOAT,
+    @Lon1 FLOAT,
+    @Lat2 FLOAT,
+    @Lon2 FLOAT,
+    @Unidade VARCHAR(2) -- 'M' para Metros, 'KM' para Quilômetros
+)
+RETURNS FLOAT
+AS
+BEGIN
+    DECLARE @Ponto1 GEOGRAPHY;
+    DECLARE @Ponto2 GEOGRAPHY;
+    DECLARE @Distancia FLOAT;
+
+    -- Validação de segurança: Se alguma coordenada ou unidade for nula, retorna nulo
+    IF @Lat1 IS NULL OR @Lon1 IS NULL OR @Lat2 IS NULL OR @Lon2 IS NULL OR @Unidade IS NULL
+        RETURN NULL;
+
+    -- O número 4326 representa o WGS84 (padrão mundial do GPS)
+    SET @Ponto1 = GEOGRAPHY::STGeomFromText('POINT(' + CAST(@Lon1 AS VARCHAR(20)) + ' ' + CAST(@Lat1 AS VARCHAR(20)) + ')', 4326);
+    SET @Ponto2 = GEOGRAPHY::STGeomFromText('POINT(' + CAST(@Lon2 AS VARCHAR(20)) + ' ' + CAST(@Lat2 AS VARCHAR(20)) + ')', 4326);
+
+    -- Calcula a distância nativa em metros
+    SET @Distancia = @Ponto1.STDistance(@Ponto2);
+
+    -- Aplica a conversão se o usuário pedir em Quilômetros
+    IF UPPER(@Unidade) = 'KM'
+    BEGIN
+        SET @Distancia = @Distancia / 1000.0;
+    END
+
+    RETURN @Distancia;
+END;
+GO
+
+
+-- =========================================================================
+-- Script de Teste Atualizado (Para a sua validação)
+-- Veja como o SELECT fica muito mais profissional mudando apenas a flag de unidade na chamada da função:
+-- =========================================================================
+
+WITH DBO_PONTOS_MOCK AS (
+    SELECT 
+        'Praça Deodoro até Igreja da Sé' AS Descricao,
+        -2.529815 AS Lat_Origem, -44.302521 AS Lon_Origem, 
+        -2.529068 AS Lat_Destino, -44.306800 AS Lon_Destino  
+)
+SELECT 
+    Descricao,
+    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'M') AS Distancia_Metros,
+    dbo.fn_Geo_CalcularDistancia(Lat_Origem, Lon_Origem, Lat_Destino, Lon_Destino, 'KM') AS Distancia_KM
+FROM DBO_PONTOS_MOCK;
