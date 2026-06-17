@@ -1,0 +1,41 @@
+-- =========================================================================
+-- CATEGORIA: LOCALIZAÇÃO E CONTATO
+-- =========================================================================
+
+-- 3.1. Formatação e Alinhamento de CEP (8 dígitos)
+CREATE FUNCTION dbo.fn_Format_CEP (@CEP VARCHAR(8))
+RETURNS VARCHAR(9)
+AS
+BEGIN
+    DECLARE @CEP_Formatado VARCHAR(9);
+    SET @CEP = RIGHT('00000000' + @CEP, 8);
+
+    IF LEN(@CEP) = 8
+        SET @CEP_Formatado = SUBSTRING(@CEP, 1, 5) + '-' + SUBSTRING(@CEP, 6, 3);
+    ELSE
+        SET @CEP_Formatado = @CEP;
+    RETURN @CEP_Formatado;
+END;
+GO
+
+-- 3.2. Formatação Dinâmica de Telefone (Suporta Fixo com 10 dgts e Celular com 11 dgts)
+CREATE FUNCTION dbo.fn_Format_Telefone (@Telefone VARCHAR(11))
+RETURNS VARCHAR(15)
+AS
+BEGIN
+    DECLARE @Tel_Formatado VARCHAR(15);
+    SET @Telefone = RTRIM(LTRIM(@Telefone));
+
+    IF LEN(@Telefone) = 11
+        SET @Tel_Formatado = '(' + SUBSTRING(@Telefone, 1, 2) + ') ' + 
+                             SUBSTRING(@Telefone, 3, 5) + '-' + 
+                             SUBSTRING(@Telefone, 8, 4);
+    ELSE IF LEN(@Telefone) = 10
+        SET @Tel_Formatado = '(' + SUBSTRING(@Telefone, 1, 2) + ') ' + 
+                             SUBSTRING(@Telefone, 3, 4) + '-' + 
+                             SUBSTRING(@Telefone, 7, 4);
+    ELSE
+        SET @Tel_Formatado = @Telefone;
+    RETURN @Tel_Formatado;
+END;
+GO
