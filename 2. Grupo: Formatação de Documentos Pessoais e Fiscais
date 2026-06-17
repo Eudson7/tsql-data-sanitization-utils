@@ -21,6 +21,17 @@ BEGIN
 END;
 GO
 
+-- SCRIPT DE TESTE: fn_Format_CPF
+WITH MOCK_TESTE AS (
+    SELECT '45678912' AS CPF_Incompleto, '00123456789' AS CPF_Completo
+)
+SELECT 
+    CPF_Incompleto AS Original_1, dbo.fn_Format_CPF(CPF_Incompleto) AS CPF_Mascarado_1,
+    CPF_Completo AS Original_2, dbo.fn_Format_CPF(CPF_Completo) AS CPF_Mascarado_2
+FROM MOCK_TESTE;
+GO
+
+
 -- 2.2. Formatação e Alinhamento de CNPJ (14 dígitos)
 CREATE FUNCTION dbo.fn_Format_CNPJ (@CNPJ VARCHAR(14))
 RETURNS VARCHAR(18)
@@ -39,4 +50,14 @@ BEGIN
         SET @CNPJ_Formatado = @CNPJ;
     RETURN @CNPJ_Formatado;
 END;
+GO
+
+-- SCRIPT DE TESTE: fn_Format_CNPJ
+WITH MOCK_TESTE AS (
+    SELECT '1234567800019' AS CNPJ_Incompleto, '00123456000189' AS CNPJ_Completo
+)
+SELECT 
+    CNPJ_Incompleto AS Original_1, dbo.fn_Format_CNPJ(CNPJ_Incompleto) AS CNPJ_Mascarado_1,
+    CNPJ_Completo AS Original_2, dbo.fn_Format_CNPJ(CNPJ_Completo) AS CNPJ_Mascarado_2
+FROM MOCK_TESTE;
 GO
