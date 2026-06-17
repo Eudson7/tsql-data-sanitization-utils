@@ -18,6 +18,17 @@ BEGIN
 END;
 GO
 
+-- SCRIPT DE TESTE: fn_Format_CEP
+WITH MOCK_TESTE AS (
+    SELECT '1310200' AS CEP_Incompleto, '65000000' AS CEP_Completo
+)
+SELECT 
+    CEP_Incompleto AS Original_1, dbo.fn_Format_CEP(CEP_Incompleto) AS CEP_Mascarado_1,
+    CEP_Completo AS Original_2, dbo.fn_Format_CEP(CEP_Completo) AS CEP_Mascarado_2
+FROM MOCK_TESTE;
+GO
+
+
 -- 3.2. Formatação Dinâmica de Telefone (Suporta Fixo com 10 dgts e Celular com 11 dgts)
 CREATE FUNCTION dbo.fn_Format_Telefone (@Telefone VARCHAR(11))
 RETURNS VARCHAR(15)
@@ -38,4 +49,14 @@ BEGIN
         SET @Tel_Formatado = @Telefone;
     RETURN @Tel_Formatado;
 END;
+GO
+
+-- SCRIPT DE TESTE: fn_Format_Telefone
+WITH MOCK_TESTE AS (
+    SELECT '9832221122' AS Telefone_Fixo, '98991234567' AS Celular
+)
+SELECT 
+    Telefone_Fixo AS Original_Fixo, dbo.fn_Format_Telefone(Telefone_Fixo) AS Fixo_Mascarado,
+    Celular AS Original_Celular, dbo.fn_Format_Telefone(Celular) AS Celular_Mascarado
+FROM MOCK_TESTE;
 GO
