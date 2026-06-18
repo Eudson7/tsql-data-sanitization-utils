@@ -1,0 +1,51 @@
+1. Padrão de Nomenclatura de Tabelas
+Tabela Fato: FT_ + Nome do Processo (Ex: FT_VENDAS, FT_ACESSOS)
+
+Tabela Dimensão: DIM_ + Nome do Contexto (Ex: DIM_CLIENTE, DIM_PRODUTO)
+
+Tabela Stage (Rascunho): STG_ + Nome da Origem (Ex: STG_ARQUIVO_CLIENTES)
+
+2. Padrão de Chaves e Relacionamentos
+Surrogate Key (Chave Substituta/Primária da Dimensão): Nome_PK ou Nome_SK (Ex: CLIENTE_SK). No SQL Server, criada como INT IDENTITY(1,1) PRIMARY KEY.
+
+Natural Key (Chave de Negócio/Origem): NK_ ou o nome original (Ex: CNPJ, CPF, COD_PRODUTO).
+
+Foreign Key (Chave Estrangeira na Fato): Exatamente o mesmo nome da SK da dimensão (Ex: FT_VENDAS conterá a coluna CLIENTE_SK).
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+3. Script Molde (Template Rápido)
+
+Para criar ou explicar o relacionamento na hora, o esqueleto padrão é este:
+-- 1. CRIA A DIMENSÃO (Lado "Um" do relacionamento)
+CREATE TABLE DIM_EXEMPLO (
+    EXEMPLO_SK INT IDENTITY(1,1) PRIMARY KEY, -- Chave do DW
+    COD_ORIGEM_NK VARCHAR(50) NOT NULL,       -- Chave do Sistema
+    DESCRICAO VARCHAR(100),
+    DATA_CADASTRO DATE
+);
+
+-- 2. CRIA A FATO (Lado "Muitos" do relacionamento)
+CREATE TABLE FT_PROCESSO (
+    PROCESSO_ID INT IDENTITY(1,1) PRIMARY KEY, -- Opcional (ID da Fato)
+    EXEMPLO_SK INT NOT NULL,                   -- FK que liga na Dimissão
+    TEMPO_SK INT NOT NULL,                     -- FK que liga no Tempo
+    
+    -- Métricas (Campos quantitativos de soma/contagem)
+    VALOR_TOTAL DECIMAL(18,2),
+    QUANTIDADE INT,
+
+    -- Criação da restrição de chave estrangeira
+    CONSTRAINT FK_FT_PROCESSO_DIM_EXEMPLO 
+        FOREIGN KEY (EXEMPLO_SK) REFERENCES DIM_EXEMPLO(EXEMPLO_SK)
+);
+
+4. Glossário:
+- Granularidade: O nível de detalhe da tabela Fato (ex: Diária, Por Cliente, Por Transação).
+- Conformed Dimension (Dimensão Compartilhada): Quando uma dimensão (ex: DIM_TEMPO) se conecta a mais de uma Fato no banco.
+- Role-Playing Dimension (Dimensão de Interpretação): Quando a mesma dimensão se conecta na Fato por colunas diferentes 
+(ex: DIM_TEMPO ligada em Data_Venda e Data_Entrega).
+- Tabela "Sim/Não", "Ativo/Inativo", "Pendente" é conhecida na modelagem dimensional como uma Junk Dimension (Dimensão de Flags). 
+Ela serve para limpar a tabela Fato, evitando que fiquem várias colunas de texto (como "S" ou "N") soltas lá dentro.
+  A estrutura fica assim:
+  Nome: DIM_SIM_NAO (ou DIM_JUNK)
+  Campos: SIM_NAO_SK (PK) e DESCRICAO (onde as linhas serão "Sim" e "Não").
