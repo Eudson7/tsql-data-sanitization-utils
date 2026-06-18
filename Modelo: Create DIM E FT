@@ -18,8 +18,8 @@ Foreign Key (Chave Estrangeira na Fato): Exatamente o mesmo nome da SK da dimens
 Para criar ou explicar o relacionamento na hora, o esqueleto padrão é este:
 -- 1. CRIA A DIMENSÃO (Lado "Um" do relacionamento)
 CREATE TABLE DIM_EXEMPLO (
-    EXEMPLO_SK INT IDENTITY(1,1) PRIMARY KEY, -- Chave do DW
-    COD_ORIGEM_NK VARCHAR(50) NOT NULL,       -- Chave do Sistema
+    EXEMPLO_SK INT IDENTITY(1,1) PRIMARY KEY, -- Chave do DW. "SK" significa "Surrogate Key" (Chave Substituta)
+    COD_ORIGEM_NK VARCHAR(50) NOT NULL,       -- Chave do Sistema. "NK" Significa "Natural Key" (Chave Primária)
     DESCRICAO VARCHAR(100),
     DATA_CADASTRO DATE
 );
@@ -46,6 +46,51 @@ CREATE TABLE FT_PROCESSO (
 (ex: DIM_TEMPO ligada em Data_Venda e Data_Entrega).
 - Tabela "Sim/Não", "Ativo/Inativo", "Pendente" é conhecida na modelagem dimensional como uma Junk Dimension (Dimensão de Flags). 
 Ela serve para limpar a tabela Fato, evitando que fiquem várias colunas de texto (como "S" ou "N") soltas lá dentro.
-  A estrutura fica assim:
-  Nome: DIM_SIM_NAO (ou DIM_JUNK)
-  Campos: SIM_NAO_SK (PK) e DESCRICAO (onde as linhas serão "Sim" e "Não").
+    A estrutura fica assim:
+    Nome: DIM_SIM_NAO (ou DIM_JUNK)
+    Campos: SIM_NAO_SK (PK) e DESCRICAO (onde as linhas serão "Sim" e "Não").
+    "SK" significa "Surrogate Key" (Chave Substituta) campos iguas na DIM e FT
+
+-- 5. CRIAÇÃO DA TABELA DIM_TEMPO
+CREATE TABLE DIM_TEMPO (
+    TEMPO_SK INT PRIMARY KEY,       -- Chave no formato AAAAMMDD (Ex: 20260617)
+    DATA DATE NOT NULL,
+    ANO INT NOT NULL,
+    MES INT NOT NULL,
+    DIA INT NOT NULL,
+    TRIMESTRE INT NOT NULL,
+    NOME_MES VARCHAR(15) NOT NULL
+);
+GO
+
+-- 2. SCRIPT DE POVOAMENTO AUTOMÁTICO
+SET NOCOUNT ON;
+
+-- Inserção da Data Especial (1900-01-01) para tratamento de erros/nulos
+INSERT INTO DIM_TEMPO (TEMPO_SK, DATA, ANO, MES, DIA, TRIMESTRE, NOME_MES)
+VALUES (19000101, '1900-01-01', 1900, 1, 1, 1, 'Não Informado');
+
+-- Configuração do período (1985 até 2026)
+DECLARE @DataInicial DATE = '1985-01-01';
+DECLARE @DataFinal DATE   = '2026-12-31';
+DECLARE @DataAtual DATE   = @DataInicial;
+
+-- Laço de repetição dia após dia
+WHILE @DataAtual <= @DataFinal
+BEGIN
+    INSERT INTO DIM_TEMPO (TEMPO_SK, DATA, ANO, MES, DIA, TRIMESTRE, NOME_MES)
+    VALUES (
+        CAST(CONVERT(VARCHAR(8), @DataAtual, 112) AS INT), -- Gera a SK numérica (AAAAMMDD)
+        @DataAtual,
+        YEAR(@DataAtual),
+        MONTH(@DataAtual),
+        DAY(@DataAtual),
+        DATEPART(QUARTER, @DataAtual),
+        DATENAME(MONTH, @DataAtual)
+    );
+
+    -- Avança 1 dia
+    SET @DataAtual = DATEADD(DAY, 1, @DataAtual);
+END;
+GO
+
