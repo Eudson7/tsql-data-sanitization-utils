@@ -1,0 +1,20 @@
+-- CARGA BRUTA PERMISSIVA - EVITA QUEBRA E GRARANTE A CARGA
+CREATE TABLE #Stg_Arquivo_dados (
+    CAMPO1 VARCHAR(50), 
+    CAMPO2 VARCHAR(50),
+    CAMPO3 VARCHAR(50),
+    CAMPO4 VARCHAR(50),
+    CAMPO5 VARCHAR(100) --- AVALIAR OS CAMPOS COM TAMANHO MAIOR QUE 100
+);
+
+BULK INSERT #Stg_Arquivo_dados
+FROM 'C:\Caminho\Para\O\Arquivo\Arquivo_de_dados.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ';', -- verificar o tipo de separado ';' ou ','
+    ROWTERMINATOR = '\n',
+    CODEPAGE = '65001' -- Trata acentuação UTF-8 se houver
+);
+
+
+--SEQLSERVER-BT_DT-TSK-IMP_FT_FL
