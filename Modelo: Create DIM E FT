@@ -94,3 +94,41 @@ BEGIN
 END;
 GO
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Gerador Automático da DIM_TEMPO (Descobre Min/Max e cria a tabela)
+WITH DatasLimites AS (
+    -- 1. Descobre o menor ano e o maior ano combinando todas as datas do projeto
+    SELECT 
+        MIN(MIN_DATA) AS DataInicio,
+        MAX(MAX_DATA) AS DataFim    
+    FROM (
+        SELECT MIN(CAST(REFERENCIA AS DATE)) AS MIN_DATA, MAX(CAST(REFERENCIA AS DATE)) AS MAX_DATA FROM dbo.Arquivo
+        UNION ALL
+        SELECT MIN(CAST(DATA_VERIFICACAO AS DATE)), MAX(CAST(DATA_VERIFICACAO AS DATE)) FROM dbo.Arquivo WHERE DATA_VERIFICACAO > '1900-01-01' -- Ignora o nulo tratado
+        UNION ALL
+        SELECT MIN(CAST(REFERENCIA AS DATE)), MAX(CAST(REFERENCIA AS DATE)) FROM dbo.Arquivo2
+        UNION ALL
+        SELECT MIN(CAST(DATA AS DATE)), MAX(CAST(DATA AS DATE)) FROM dbo.Arquivo2
+    ) AS TodasDatas
+),
+GeradorDatas AS (
+    -- 2. CTE Recursiva que gera dia a dia entre a menor e a maior data
+    SELECT DataInicio AS DataAtual, DataFim FROM DatasLimites
+    UNION ALL
+    SELECT DATEADD(DAY, 1, DataAtual), DataFim 
+    FROM GeradorDatas 
+    WHERE DataAtual < DataFim
+)
+-- 3. Cria a tabela embutida (SELECT INTO) gerando os atributos de tempo
+SELECT 
+    CONVERT(INT, CONVERT(VARCHAR(8), DataAtual, 112)) AS TEMPO_SK, -- Ex: 20260617 (Formato numérico ideal para SK de tempo)
+    DataAtual AS DT_DATA,
+    YEAR(DataAtual) AS NU_ANO,
+    MONTH(DataAtual) AS NU_MES,
+    DATENAME(MONTH, DataAtual) AS DE_MES,
+    DAY(DataAtual) AS NU_DIA,
+    DATEPART(QUARTER, DataAtual) AS NU_TRIMESTRE
+INTO dbo.DIM_TEMPO -- Cria a tabela física direto aqui
+FROM GeradorDatas
+OPTION (MAXRECURSION 0); -- Permite gerar mais de 100 dias (essencial para anos completos)
